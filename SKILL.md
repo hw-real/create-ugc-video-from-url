@@ -26,6 +26,7 @@ Turn one product URL into an evidence-grounded UGC video package and, when reque
 6. Call `draft_video_prompt` exactly once per requested logical video unless the user already supplied a usable generated-video prompt. Pass the complete script in `script_md`.
 7. Send all paid image/video work in exactly one `run_paid_execution` call. Use dependencies when a generated image feeds the video.
 8. Do not claim the video exists until a real generation result is returned.
+9. Do not delegate script or storyboard writing to a subagent. Produce the plan (Phase 5) in the main thread, then pass it to `draft_video_prompt` via `script_md`.
 
 ## Bundled resources (use them)
 
@@ -185,7 +186,7 @@ First call `draft_image_prompts` with the exact required image count, normally `
 ]
 ```
 
-Adjust values to the user's brief. Keep one requested video as one logical video step; the execution layer handles durations above 15 seconds by splitting and merging.
+`duration`, `aspect_ratio`, `resolution`, and `model_id` in the examples are **sample values, not constants** — derive them per run from the user's brief, target platform, product evidence, and environment availability, falling back to the Phase 1 defaults. Keep one requested video as one logical video step; the execution layer handles durations above 15 seconds by splitting and merging. After submission, read the confirmed plan from the execution response and report the **actual** resolution, model, and credit cost in the approval UI.
 
 ## Phase 8: Close the loop
 
