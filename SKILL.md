@@ -23,7 +23,7 @@ Turn one product URL into an evidence-grounded UGC video package and, when reque
 3. Distinguish verified facts from creative interpretation. Never invent price, ingredients, certifications, performance figures, guarantees, reviews, scarcity, or before/after results.
 4. Reuse adequate real product images from the URL. Do not generate an extra image merely because image generation is available.
 5. Never place media URLs inside a generation prompt. Pass real URLs through `image_urls`.
-6. Call `draft_video_prompt` exactly once per requested logical video unless the user already supplied a usable generated-video prompt. Pass the complete script in `script_md`.
+6. Call `draft_video_prompt` exactly once per requested logical video UNLESS the user already supplied a complete shot plan — a message carrying per-segment timing across the full duration (e.g. "0:00–0:02 … 0:07–0:10" or "0-2s … 7-10s") with verbatim dialogue and camera/action direction. In that case SKIP the draft entirely: build the `generate_video_tool` motion prompt directly from the user's own content (dialogue verbatim, never translate) and proceed to Phase 7. If you do draft, pass the complete script in `script_md` and ALWAYS pass `duration` and `aspect_ratio` — a user's stated duration (e.g. 10s) must never be silently replaced by the tool default (15s).
 7. Send all paid image/video work in exactly one `run_paid_execution` call. Use dependencies when a generated image feeds the video.
 8. Do not claim the video exists until a real generation result is returned.
 9. Do not delegate script or storyboard writing to a subagent. Produce the plan (Phase 5) in the main thread, then pass it to `draft_video_prompt` via `script_md`.
@@ -101,13 +101,15 @@ Do not expose internal envelope JSON. If the user asked only for a plan or scrip
 
 ## Phase 6: Draft the model prompt
 
+Skip this phase when the user's message already IS the complete shot plan (per-segment timing across the full duration + verbatim dialogue + camera/action direction): use their content directly as the motion prompt and go straight to Phase 7. Only draft when the shot plan is partial or missing.
+
 Call:
 
 ```text
 draft_video_prompt(
   brief=<full product facts + chosen strategy + visual/audio direction + fidelity constraints>,
-  duration=<total logical duration, 3-60>,
-  aspect_ratio=<allowed ratio>,
+  duration=<total logical duration, 3-60 — REQUIRED: always pass the user's stated duration>,
+  aspect_ratio=<allowed ratio — REQUIRED: always pass>,
   script_md=<complete script and shot list>
 )
 ```
